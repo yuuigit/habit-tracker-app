@@ -10,6 +10,31 @@ import 'stats_screen.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  // 改善 #2: 削除前に確認ダイアログを表示
+  Future<void> _confirmDelete(
+      BuildContext context, String habitId, HabitNotifier notifier) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('習慣を削除しますか？'),
+        content: const Text('この習慣と達成記録がすべて削除されます。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('削除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await notifier.deleteHabit(habitId);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(habitNotifierProvider);
@@ -56,7 +81,8 @@ class HomeScreen extends ConsumerWidget {
                             builder: (_) => HabitFormScreen(habit: habit),
                           ),
                         ),
-                        onDelete: () => notifier.deleteHabit(habit.id),
+                        onDelete: () =>
+                            _confirmDelete(context, habit.id, notifier),
                       );
                     },
                   ),

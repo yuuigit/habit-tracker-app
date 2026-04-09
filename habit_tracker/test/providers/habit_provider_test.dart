@@ -62,11 +62,9 @@ void main() {
 
     final id = container.read(habitNotifierProvider).habits.first.id;
 
-    // チェック（達成）
     await notifier.toggleRecord(id, DateTime.now());
     expect(notifier.isCompletedToday(id), true);
 
-    // チェック解除
     await notifier.toggleRecord(id, DateTime.now());
     expect(notifier.isCompletedToday(id), false);
   });
@@ -84,5 +82,21 @@ void main() {
 
     await notifier.toggleRecord(id, today);
     expect(notifier.getStreak(id), 1);
+  });
+
+  // 改善 #1: ストリークが HabitState にキャッシュされる
+  test('HabitState にストリークのキャッシュが含まれる', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(habitNotifierProvider.notifier);
+
+    await notifier.addHabit(
+        name: 'キャッシュテスト', icon: '🔥', frequency: [1, 2, 3, 4, 5, 6, 7]);
+
+    final id = container.read(habitNotifierProvider).habits.first.id;
+    await notifier.toggleRecord(id, DateTime.now());
+
+    final state = container.read(habitNotifierProvider);
+    expect(state.streaks[id], 1);
   });
 }

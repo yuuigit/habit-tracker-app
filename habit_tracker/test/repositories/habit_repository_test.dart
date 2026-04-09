@@ -78,4 +78,27 @@ void main() {
     final records = repo.getRecordsForDate(DateTime(2026, 4, 8));
     expect(records, isEmpty);
   });
+
+  // 改善 #7: 習慣リストが createdAt 順に返される
+  test('習慣リストは createdAt の昇順で返される', () async {
+    final habit1 = Habit()
+      ..id = 'h1'
+      ..name = '後から追加'
+      ..icon = '✅'
+      ..frequency = [1]
+      ..createdAt = DateTime(2026, 4, 9);
+    final habit2 = Habit()
+      ..id = 'h2'
+      ..name = '先に追加'
+      ..icon = '🏃'
+      ..frequency = [1]
+      ..createdAt = DateTime(2026, 4, 8);
+
+    await repo.saveHabit(habit1);
+    await repo.saveHabit(habit2);
+
+    final habits = repo.getAllHabits();
+    expect(habits.first.name, '先に追加');
+    expect(habits.last.name, '後から追加');
+  });
 }

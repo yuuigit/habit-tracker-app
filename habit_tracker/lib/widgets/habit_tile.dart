@@ -30,7 +30,8 @@ class HabitTile extends StatelessWidget {
           color: isCompleted ? Colors.grey : null,
         ),
       ),
-      subtitle: Text('🔥 $streak 日連続'),
+      // 改善 #6: ストリーク0のときは非表示
+      subtitle: streak > 0 ? Text('🔥 $streak 日連続') : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

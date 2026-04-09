@@ -6,7 +6,12 @@ class HabitRepository {
   Box<Habit> get _habitBox => Hive.box<Habit>('habits');
   Box<HabitRecord> get _recordBox => Hive.box<HabitRecord>('habit_records');
 
-  List<Habit> getAllHabits() => _habitBox.values.toList();
+  // 改善 #7: createdAt 昇順で返す（追加順が安定する）
+  List<Habit> getAllHabits() {
+    final habits = _habitBox.values.toList();
+    habits.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return habits;
+  }
 
   Future<void> saveHabit(Habit habit) async {
     await _habitBox.put(habit.id, habit);

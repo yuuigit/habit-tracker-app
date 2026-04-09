@@ -7,7 +7,14 @@ import '../repositories/habit_repository.dart';
 class HabitState {
   final List<Habit> habits;
   final List<HabitRecord> todayRecords;
-  HabitState({required this.habits, required this.todayRecords});
+  // 改善 #1: ストリークをキャッシュして毎回 DB アクセスしない
+  final Map<String, int> streaks;
+
+  HabitState({
+    required this.habits,
+    required this.todayRecords,
+    required this.streaks,
+  });
 }
 
 class HabitNotifier extends Notifier<HabitState> {
@@ -15,11 +22,15 @@ class HabitNotifier extends Notifier<HabitState> {
   final _uuid = const Uuid();
 
   @override
-  HabitState build() {
-    return HabitState(
-      habits: _repo.getAllHabits(),
-      todayRecords: _repo.getRecordsForDate(DateTime.now()),
-    );
+  HabitState build() => _buildState();
+
+  HabitState _buildState() {
+    final habits = _repo.getAllHabits();
+    final todayRecords = _repo.getRecordsForDate(DateTime.now());
+    final streaks = {
+      for (final h in habits) h.id: _calcStreak(h.id),
+    };
+    return HabitState(habits: habits, todayRecords: todayRecords, streaks: streaks);
   }
 
   Future<void> addHabit({
@@ -66,7 +77,15 @@ class HabitNotifier extends Notifier<HabitState> {
     _reload();
   }
 
-  int getStreak(String habitId) {
+  // キャッシュ済みストリークを返す（DB アクセスなし）
+  int getStreak(String habitId) => state.streaks[habitId] ?? 0;
+
+  bool isCompletedToday(String habitId) {
+    return state.todayRecords.any((r) => r.habitId == habitId);
+  }
+
+  // 内部計算用（_buildState からのみ呼ぶ）
+  int _calcStreak(String habitId) {
     final records = _repo.getAllRecordsForHabit(habitId)
       ..sort((a, b) => b.date.compareTo(a.date));
     if (records.isEmpty) return 0;
@@ -87,15 +106,8 @@ class HabitNotifier extends Notifier<HabitState> {
     return streak;
   }
 
-  bool isCompletedToday(String habitId) {
-    return state.todayRecords.any((r) => r.habitId == habitId);
-  }
-
   void _reload() {
-    state = HabitState(
-      habits: _repo.getAllHabits(),
-      todayRecords: _repo.getRecordsForDate(DateTime.now()),
-    );
+    state = _buildState();
   }
 }
 

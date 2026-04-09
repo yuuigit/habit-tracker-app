@@ -57,7 +57,11 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       appBar: AppBar(
         title: Text(widget.habit == null ? '習慣を追加' : '習慣を編集'),
         actions: [
-          TextButton(onPressed: _save, child: const Text('保存')),
+          // 改善 #3: 曜日が未選択のとき保存ボタンを無効化
+          TextButton(
+            onPressed: _frequency.isNotEmpty ? _save : null,
+            child: const Text('保存'),
+          ),
         ],
       ),
       body: Padding(
